@@ -1,4 +1,5 @@
 # 🌐 skill-i18n
+<img src="./assets/skill_i18n_user_flow.svg">
 
 > **i18n for AI Agent Skills** — translate your `SKILL.md` repository to any of 83+ languages, powered by [Lingo.dev](https://lingo.dev).
 
@@ -46,6 +47,7 @@ uv sync
 
 # Set your Lingo.dev API key
 export LINGODOTDEV_API_KEY=your_key_here
+export LINGODOTDEV_ENGINE_ID=your_engine_id # optional
 ```
 
 Get a free API key at [lingo.dev](https://lingo.dev).
@@ -56,27 +58,27 @@ Get a free API key at [lingo.dev](https://lingo.dev).
 
 ```bash
 # Translate a skills repo to Japanese
-skill-i18n translate ./my-skills ja
+uv run skill-i18n translate ./my-skills de
 
 # Translate to Spanish, output to a custom directory
-skill-i18n translate ./my-skills es --output ./translated-skills
+uv run skill-i18n translate ./my-skills es --output ./translated-skills
 
 # Translate to multiple languages (run in sequence or script it)
 for locale in fr de ko zh pt-BR; do
-  skill-i18n translate ./my-skills $locale --output ./i18n
+  uv run skill-i18n translate ./my-skills $locale --output ./i18n
 done
 
 # Scan what's in a repo before translating
-skill-i18n scan ./my-skills
+uv run skill-i18n scan ./my-skills
 
 # See all supported locales
 skill-i18n list-locales
 
 # Filter locales by name
-skill-i18n list-locales --filter chinese
+uv run  skill-i18n list-locales --filter chinese
 
 # Auto-detect the language of a SKILL.md
-skill-i18n detect ./my-skills/pdf-processing/SKILL.md
+uv run  skill-i18n detect ./my-skills/pdf-processing/SKILL.md
 ```
 
 ---
@@ -97,11 +99,11 @@ my-skills/
     └── SKILL.md
 ```
 
-Running `skill-i18n translate ./my-skills ja --output ./i18n` produces:
+Running `uv run skill-i18n translate ./my-skills de --output ./i18n` produces:
 
 ```
 i18n/
-└── ja/
+└── de/
     ├── pdf-processing/
     │   ├── SKILL.md          ← translated
     │   └── scripts/
@@ -135,11 +137,10 @@ i18n/
 | `es` | Spanish | `ja` | Japanese |
 | `fr` | French | `ko` | Korean |
 | `de` | German | `zh` | Chinese (Simplified) |
-| `pt-BR` | Portuguese (Brazil) | `ar` | Arabic |
 | `hi` | Hindi | `ru` | Russian |
 | `it` | Italian | `nl` | Dutch |
 
-Run `skill-i18n list-locales` for the complete list.
+Run `uv run skill-i18n list-locales` for the complete list.
 
 ---
 
@@ -148,7 +149,7 @@ Run `skill-i18n list-locales` for the complete list.
 ### `translate`
 
 ```
-skill-i18n translate REPO_PATH TARGET_LOCALE [OPTIONS]
+uv run skill-i18n translate REPO_PATH TARGET_LOCALE [OPTIONS]
 
 Arguments:
   REPO_PATH       Path to your skills repository
@@ -158,6 +159,7 @@ Options:
   --output, -o    Output directory (default: REPO_PATH/i18n/)
   --source, -s    Source locale (default: en)
   --api-key       Lingo.dev API key (or set LINGODOTDEV_API_KEY)
+  --engine-id     Lingo.dev engine ID (optional)
   --concurrency   Max parallel requests, 1-10 (default: 3)
   --overwrite     Overwrite existing translated files
 ```
@@ -165,7 +167,7 @@ Options:
 ### `scan`
 
 ```
-skill-i18n scan REPO_PATH
+uv run skill-i18n scan REPO_PATH
 
 Lists all discovered SKILL.md files with name, description, and path.
 ```
@@ -173,7 +175,7 @@ Lists all discovered SKILL.md files with name, description, and path.
 ### `list-locales`
 
 ```
-skill-i18n list-locales [--filter TEXT]
+uv run skill-i18n list-locales [--filter TEXT]
 
 Lists all 83+ supported locales. Filter by name or code.
 ```
@@ -181,7 +183,7 @@ Lists all 83+ supported locales. Filter by name or code.
 ### `detect`
 
 ```
-skill-i18n detect SKILL_PATH [--api-key KEY]
+uv run  skill-i18n detect SKILL_PATH
 
 Detects the source language of a SKILL.md file.
 ```

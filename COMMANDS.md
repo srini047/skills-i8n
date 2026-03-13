@@ -1,0 +1,9 @@
+- uv run skill-i18n scan
+- uv run skill-i18n scan •/example_skills
+- uv run skill-i18n translate •/example_skills de
+- uv run skill-i18n --help
+- uv run skill-i18n list-locales
+- uv run skill-i18n detect •/example_skills
+- uv run skill-i18n detect
+- uv run skill-i18n detect •/example_skills/code-review/SKILL.md
+- uv run skill-i18n detect •/example_skills/i18n/de/code-review/SKILL.md

@@ -45,14 +45,13 @@ app = typer.Typer(
 console = Console()
 
 LOGO = (
-    "\n[bold cyan] ____  _    _ _ _      _ _  ___  ____  [/bold cyan]\n"
-    "[bold cyan]/ ___|| | _(_) | |    (_) |/ _ \\|  _ \\ [/bold cyan]\n"
-    "[bold cyan]\\___ \\| |/ / | | |____| | | (_) | | | |[/bold cyan]\n"
-    "[bold cyan] ___) |   <| | | |____| | |\\__, | |_| |[/bold cyan]\n"
-    "[bold cyan]|____/|_|\\_\\_|_|_|    |_|_|  /_/|____/ [/bold cyan]\n"
-    "[dim]i18n for AI Agent Skills · powered by Lingo.dev[/dim]\n"
+    "\n[bold cyan]  ____  _    _ _ _ _ _   ___   ___  _   _ [/bold cyan]\n"
+    "[bold cyan] / ___|| | _(_) | (_) | |_ _| / _ \\| \\ | |[/bold cyan]\n"
+    "[bold cyan] \\___ \\| |/ / | | | | |  | | | | | |  \\| |[/bold cyan]\n"
+    "[bold cyan]  ___) |   <| | | | | |  | | |  -  | |\\  |[/bold cyan]\n"
+    "[bold cyan] |____/|_|\\_\\_|_|_|_|_| |___| \\___/|_| \\_|[/bold cyan]\n"
+    "[dim]Skill i8n · powered by Lingo.dev[/dim]\n"
 )
-
 
 def _require_api_key(api_key: str | None) -> str:
     key = api_key or os.environ.get("LINGODOTDEV_API_KEY", "")
