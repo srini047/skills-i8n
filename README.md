@@ -107,11 +107,14 @@ i18n/
         └── SKILL.md          ← translated
 ```
 
+Sharing sample output diff:
+![sample_skill_conversion](./assets/sample_skill_conversion_en_de.png)
+
 ---
 
 ## How it works
 
-<img src="https://raw.githubusercontent.com/srini047/skills-i8n/refs/heads/master/assets/skill_i18n_user_flow.svg" />
+![flow_diagram](./assets/flow_diagram.png)
 
 ---
 
