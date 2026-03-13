@@ -1,5 +1,5 @@
 # 🌐 skill-i18n
-<img src="./assets/skill_i18n_user_flow.svg">
+<img src="https://raw.githubusercontent.com/srini047/skills-i8n/refs/heads/master/assets/skill_i18n_user_flow.svg">
 
 > **i18n for AI Agent Skills** — translate your `SKILL.md` repository to any of 83+ languages, powered by [Lingo.dev](https://lingo.dev).
 
