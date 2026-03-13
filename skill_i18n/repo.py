@@ -2,6 +2,7 @@
 Orchestrator: discovers skills in a repo, translates them, and writes
 localized copies while preserving directory structure and companion files.
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -9,7 +10,13 @@ import shutil
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from .parser import ParsedSkill, SkillFrontmatter, discover_skills, parse_skill_file, render_skill_md
+from .parser import (
+    ParsedSkill,
+    SkillFrontmatter,
+    discover_skills,
+    parse_skill_file,
+    render_skill_md,
+)
 from .translator import SkillTranslator
 
 
@@ -70,6 +77,7 @@ class SkillRepo:
         target_locale: str,
         output_root: Path,
         api_key: str | None = None,
+        engine_id: str | None = None,
         source_locale: str = "en",
         max_concurrent: int = 3,
         overwrite: bool = False,
@@ -83,21 +91,24 @@ class SkillRepo:
             target_locale: BCP-47 locale code (e.g. "es", "ja", "de")
             output_root: Base directory for translated output
             api_key: Lingo.dev API key (falls back to LINGODOTDEV_API_KEY env)
+            engine_id: Lingo.dev Engine ID. Routes through your configured engine
             source_locale: Source language of the skills (default: "en")
             max_concurrent: Max parallel translation requests
             overwrite: Whether to overwrite existing translated files
             on_progress: Optional async callback(result: TranslationResult)
         """
         skills = self.discover()
-        translator = SkillTranslator(api_key=api_key, source_locale=source_locale)
+        translator = SkillTranslator(api_key=api_key, source_locale=source_locale, engine_id=engine_id)
         report = TranslationReport(target_locale=target_locale, output_root=output_root)
 
         sem = asyncio.Semaphore(max_concurrent)
 
         async def translate_one(skill: ParsedSkill) -> TranslationResult:
             async with sem:
-                # Compute output path relative to repo root
-                rel_path = skill.path.relative_to(self.repo_path)
+                try:
+                    rel_path = skill.path.resolve().relative_to(self.repo_path.resolve())
+                except ValueError:
+                    rel_path = Path(skill.path.name)
                 out_skill_dir = output_root / target_locale / rel_path.parent
                 out_skill_dir.mkdir(parents=True, exist_ok=True)
                 out_path = out_skill_dir / "SKILL.md"
@@ -116,16 +127,20 @@ class SkillRepo:
                     return result
 
                 try:
-                    translated_fm_dict, translated_body = await translator.translate_skill(
-                        frontmatter_dict=skill.frontmatter.to_dict(),
-                        body=skill.body,
-                        target_locale=target_locale,
+                    translated_fm_dict, translated_body = (
+                        await translator.translate_skill(
+                            frontmatter_dict=skill.frontmatter.to_dict(),
+                            body=skill.body,
+                            target_locale=target_locale,
+                        )
                     )
 
                     # Reconstruct frontmatter object with translated fields
                     translated_fm = SkillFrontmatter(
                         name=translated_fm_dict.get("name", skill.frontmatter.name),
-                        description=translated_fm_dict.get("description", skill.frontmatter.description),
+                        description=translated_fm_dict.get(
+                            "description", skill.frontmatter.description
+                        ),
                         license=skill.frontmatter.license,
                         metadata=skill.frontmatter.metadata,
                         raw={

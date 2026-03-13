@@ -5,12 +5,17 @@ Handles structured frontmatter objects and Markdown body text.
 from __future__ import annotations
 
 import os
+import re
 from typing import Any
 
-from lingodotdev import LingoDotDevEngine
+import httpx
 
+# Lingo.dev Endpoint
+LINGO_API_BASE = "https://api.lingo.dev"
+LOCALIZE_ENDPOINT = f"{LINGO_API_BASE}/process/localize"
+RECOGNIZE_ENDPOINT = f"{LINGO_API_BASE}/process/recognize"
 
-# All locales supported by Lingo.dev (83+)
+# Locales supported by Lingo.dev (not all of them are present)
 SUPPORTED_LOCALES = [
     "af", "sq", "am", "ar", "hy", "as", "az", "eu", "be", "bn", "bs", "bg",
     "ca", "zh", "zh-TW", "hr", "cs", "da", "nl", "en", "et", "fi", "fr",
@@ -48,40 +53,69 @@ LOCALE_NAMES = {
 }
 
 
+class LingoAPIError(Exception):
+    """Raised when the Lingo.dev API returns a non-2xx response."""
+    def __init__(self, status: int, body: str):
+        self.status = status
+        super().__init__(f"Lingo.dev API error {status}: {body}")
+
+
 class SkillTranslator:
     """
-    Translates agent skill content using the Lingo.dev Python SDK.
+    Translates agent skill content using the Lingo.dev REST API (v1.0).
 
-    Handles:
-    - Frontmatter fields (name, description) as structured objects
-    - Markdown body as HTML-aware text (preserves code blocks, headings)
-    - Optional reference glossary for technical AI/agent terminology
+    Calls POST /process/localize with all translatable fields as a flat
+    key-value data object. The API applies the configured engine's full
+    pipeline: glossary rules, brand voice, per-locale LLM selection.
+
+    Optionally accepts an engineId to route through a specific Lingo.dev
+    Localization Engine (configured at lingo.dev/en/docs/engines).
     """
 
-    # Agent/AI domain glossary — keeps technical terms consistent
-    AGENT_GLOSSARY: dict[str, str] = {
-        "skill": "skill",
-        "SKILL.md": "SKILL.md",
-        "agent": "agent",
-        "frontmatter": "frontmatter",
-        "Claude": "Claude",
-        "Codex": "Codex",
-        "MCP": "MCP",
-        "bash": "bash",
-        "Python": "Python",
-        "JavaScript": "JavaScript",
-        "TypeScript": "TypeScript",
-        "GitHub": "GitHub",
-        "Git": "Git",
-        "API": "API",
-        "SDK": "SDK",
-        "LLM": "LLM",
-        "AI": "AI",
-    }
-
-    def __init__(self, api_key: str | None = None, source_locale: str = "en"):
+    def __init__(
+        self,
+        api_key: str | None = None,
+        source_locale: str = "en",
+        engine_id: str | None = None,
+        timeout: float = 60.0,
+    ):
         self.api_key = api_key or os.environ.get("LINGODOTDEV_API_KEY", "")
         self.source_locale = source_locale
+        self.engine_id = engine_id or os.environ.get("LINGODOTDEV_ENGINE_ID")
+        self.timeout = timeout
+
+    def _headers(self) -> dict[str, str]:
+        return {
+            "X-API-Key": self.api_key,
+            "Content-Type": "application/json",
+        }
+
+    async def _localize(
+        self,
+        data: dict[str, str],
+        target_locale: str,
+    ) -> dict[str, str]:
+        """
+        Call POST /process/localize.
+        Sends flat key-value string pairs; returns translated key-value pairs.
+        """
+        payload: dict[str, Any] = {
+            "sourceLocale": self.source_locale,
+            "targetLocale": target_locale,
+            "data": data,
+        }
+        if self.engine_id:
+            payload["engineId"] = self.engine_id
+
+        async with httpx.AsyncClient(timeout=self.timeout) as client:
+            resp = await client.post(
+                LOCALIZE_ENDPOINT,
+                headers=self._headers(),
+                json=payload,
+            )
+            if resp.status_code >= 400:
+                raise LingoAPIError(resp.status_code, resp.text)
+            return resp.json()["data"]
 
     async def translate_skill(
         self,
@@ -90,81 +124,90 @@ class SkillTranslator:
         target_locale: str,
     ) -> tuple[dict[str, Any], str]:
         """
-        Translate frontmatter fields and markdown body.
+        Translate frontmatter fields and markdown body via /process/localize.
+
+        All translatable strings (frontmatter name, description + body) are
+        sent as a single flat key-value object so the engine has full context
+        across the whole skill when applying glossary rules and brand voice.
+
         Returns (translated_frontmatter_dict, translated_body).
         """
-        async with LingoDotDevEngine({"api_key": self.api_key}) as engine:
-            # Translate structured frontmatter (name + description) as an object
-            # so Lingo.dev can use context across fields
-            translatable_fm = {
-                k: v
-                for k, v in frontmatter_dict.items()
-                if isinstance(v, str) and k not in ("license",)
-            }
+        # Extract string frontmatter fields that should be translated
+        translatable_fm = {
+            k: v
+            for k, v in frontmatter_dict.items()
+            if isinstance(v, str) and k not in ("license",)
+        }
 
-            translated_fm: dict[str, Any] = {}
-            if translatable_fm:
-                translated_fm = await engine.localize_object(
-                    translatable_fm,
-                    {
-                        "source_locale": self.source_locale,
-                        "target_locale": target_locale,
-                    },
-                    reference=self.AGENT_GLOSSARY,
-                )
+        # Protect code blocks before including body in the payload
+        protected_body, code_map = _protect_code_blocks(body)
 
-            # Translate the Markdown body as HTML (preserves structure)
-            translated_body = await engine.localize_html(
-                _md_to_translatable(body),
-                {
-                    "source_locale": self.source_locale,
-                    "target_locale": target_locale,
-                },
-                reference=self.AGENT_GLOSSARY,
-            )
-            translated_body = _translatable_to_md(translated_body)
+        # Build a single flat payload: fm fields + body as one request
+        # This gives the engine full context (e.g. name + description + instructions)
+        data_payload: dict[str, str] = {
+            **translatable_fm,
+            "__body__": protected_body,
+        }
 
-            # Merge non-string fields back unchanged
-            merged_fm = {**frontmatter_dict}
-            merged_fm.update(translated_fm)
+        translated_data = await self._localize(data_payload, target_locale)
 
-            return merged_fm, translated_body
+        # Restore code blocks in the body
+        translated_body_protected = translated_data.pop("__body__", protected_body)
+        translated_body = _restore_code_blocks(translated_body_protected, code_map)
+
+        # Merge translated fm fields back, keeping non-string fields unchanged
+        merged_fm = {**frontmatter_dict}
+        for k, v in translated_data.items():
+            if k in frontmatter_dict:
+                merged_fm[k] = v
+
+        return merged_fm, translated_body
 
     async def detect_locale(self, text: str) -> str:
-        """Auto-detect source locale of a skill."""
-        async with LingoDotDevEngine({"api_key": self.api_key}) as engine:
-            return await engine.detect_language(text)
+        """
+        Detect source locale via POST /process/recognize.
+        Returns a BCP-47 locale code (e.g. "en", "fr", "pt-BR").
+        """
+        async with httpx.AsyncClient(timeout=self.timeout) as client:
+            resp = await client.post(
+                RECOGNIZE_ENDPOINT,
+                headers=self._headers(),
+                json={"text": text, "labelLocale": "en"},
+            )
+            if resp.status_code >= 400:
+                raise LingoAPIError(resp.status_code, resp.text)
+            result = resp.json()
+            return result.get("locale", "en")
 
 
-def _md_to_translatable(md: str) -> str:
+# ---------------------------------------------------------------------------
+# Code block protection helpers
+# ---------------------------------------------------------------------------
+
+_FENCE_RE = re.compile(r"(```[\s\S]*?```)", re.MULTILINE)
+_PLACEHOLDER_TPL = "<<CODE_BLOCK_{idx}>>"
+
+
+def _protect_code_blocks(md: str) -> tuple[str, dict[str, str]]:
     """
-    Wrap Markdown in minimal HTML so Lingo.dev can parse and preserve structure.
-    Code blocks are wrapped in <pre><code> so they're not translated.
+    Replace fenced code blocks with stable placeholders so they are never
+    sent through the translation API.
+
+    Returns (protected_md, {placeholder: original_code_block}).
     """
-    import re
+    code_map: dict[str, str] = {}
 
-    # Protect fenced code blocks
-    code_block_re = re.compile(r"```[\s\S]*?```", re.MULTILINE)
-    placeholders: list[str] = []
+    def replace(m: re.Match) -> str:
+        placeholder = _PLACEHOLDER_TPL.format(idx=len(code_map))
+        code_map[placeholder] = m.group(0)
+        return placeholder
 
-    def replace_code(m: re.Match) -> str:
-        idx = len(placeholders)
-        placeholders.append(m.group(0))
-        return f'<pre><code data-i18n-skip="{idx}">{m.group(0)}</code></pre>'
-
-    protected = code_block_re.sub(replace_code, md)
-    return f"<div class='skill-body'>{protected}</div>"
+    protected = _FENCE_RE.sub(replace, md)
+    return protected, code_map
 
 
-def _translatable_to_md(html: str) -> str:
-    """Strip the wrapper HTML and restore original code blocks."""
-    import re
-
-    # Remove wrapper div
-    html = re.sub(r"<div class='skill-body'>|</div>$", "", html, flags=re.DOTALL).strip()
-
-    # Restore code blocks from <pre><code> tags
-    code_re = re.compile(r"<pre><code[^>]*>([\s\S]*?)</code></pre>")
-    result = code_re.sub(lambda m: m.group(1), html)
-
-    return result
+def _restore_code_blocks(md: str, code_map: dict[str, str]) -> str:
+    """Swap placeholders back for their original code blocks."""
+    for placeholder, original in code_map.items():
+        md = md.replace(placeholder, original)
+    return md

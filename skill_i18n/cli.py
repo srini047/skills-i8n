@@ -1,13 +1,14 @@
 """
 skill-i18n CLI — translate your agent skills repo to any language.
 
-Usage:
+Sample Usage:
     skill-i18n translate ./my-skills es
     skill-i18n translate ./my-skills ja --output ./translated
     skill-i18n list-locales
     skill-i18n scan ./my-skills
     skill-i18n detect ./my-skills/pdf-processing/SKILL.md
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -99,7 +100,14 @@ def translate(
         None,
         "--api-key",
         envvar="LINGODOTDEV_API_KEY",
-        help="Lingo.dev API key",
+        help="Lingo.dev API key (or set LINGODOTDEV_API_KEY)",
+    ),
+    engine_id: Optional[str] = typer.Option(
+        None,
+        "--engine-id",
+        "-e",
+        envvar="LINGODOTDEV_ENGINE_ID",
+        help="Lingo.dev Engine ID",
     ),
     concurrency: int = typer.Option(
         3,
@@ -137,6 +145,7 @@ def translate(
     key = _require_api_key(api_key)
     output_root = output or (repo_path / "i18n")
     locale_name = LOCALE_NAMES.get(target_locale, target_locale)
+    engine_label = engine_id or os.environ.get("LINGODOTDEV_ENGINE_ID") or "[dim]org default[/dim]"
 
     console.print(
         Panel(
@@ -144,6 +153,7 @@ def translate(
             f"[bold]Target:[/bold]     {target_locale} · {locale_name}\n"
             f"[bold]Source:[/bold]     {source_locale}\n"
             f"[bold]Output:[/bold]     {output_root.resolve()}\n"
+            f"[bold]Engine:[/bold]     {engine_label}\n"
             f"[bold]Threads:[/bold]    {concurrency}",
             title="🌐 skill-i18n Translation Job",
             border_style="cyan",
@@ -186,8 +196,10 @@ def translate(
 
         async def on_progress(result: TranslationResult):
             results.append(result)
-            icon = "✅" if result.success and not result.error.startswith("[skipped") else (
-                "⏭" if result.error.startswith("[skipped") else "❌"
+            icon = (
+                "✅"
+                if result.success and not result.error.startswith("[skipped")
+                else ("⏭" if result.error.startswith("[skipped") else "❌")
             )
             progress.update(
                 task,
@@ -200,6 +212,7 @@ def translate(
                 target_locale=target_locale,
                 output_root=output_root,
                 api_key=key,
+                engine_id=engine_id,
                 source_locale=source_locale,
                 max_concurrent=concurrency,
                 overwrite=overwrite,
@@ -209,7 +222,10 @@ def translate(
         report = asyncio.run(run())
 
     # Summary table
-    table = Table(title=f"\n📊 Translation Results — {target_locale} ({locale_name})", border_style="cyan")
+    table = Table(
+        title=f"\n📊 Translation Results — {target_locale} ({locale_name})",
+        border_style="cyan",
+    )
     table.add_column("Skill", style="bold")
     table.add_column("Status")
     table.add_column("Output Path", style="dim")
@@ -222,7 +238,11 @@ def translate(
         else:
             status = Text(f"❌ {r.error[:50]}", style="red")
 
-        rel_out = r.output_path.relative_to(output_root) if r.output_path.is_relative_to(output_root) else r.output_path
+        rel_out = (
+            r.output_path.relative_to(output_root)
+            if r.output_path.is_relative_to(output_root)
+            else r.output_path
+        )
         table.add_row(r.skill_name, status, str(rel_out))
 
     console.print(table)
@@ -274,7 +294,8 @@ def scan(
             rel = s.path
         table.add_row(
             s.skill_name,
-            s.frontmatter.description[:80] + ("…" if len(s.frontmatter.description) > 80 else ""),
+            s.frontmatter.description[:80]
+            + ("…" if len(s.frontmatter.description) > 80 else ""),
             s.frontmatter.license or "—",
             str(rel),
         )
@@ -285,7 +306,9 @@ def scan(
 
 @app.command(name="list-locales")
 def list_locales(
-    filter: Optional[str] = typer.Option(None, "--filter", "-f", help="Filter by name or code"),
+    filter: Optional[str] = typer.Option(
+        None, "--filter", "-f", help="Filter by name or code"
+    ),
 ):
     """
     [bold]List all locales supported by Lingo.dev.[/bold]
@@ -297,8 +320,11 @@ def list_locales(
     table.add_column("Language")
 
     filtered = [
-        (code, name) for code, name in LOCALE_NAMES.items()
-        if not filter or filter.lower() in code.lower() or filter.lower() in name.lower()
+        (code, name)
+        for code, name in LOCALE_NAMES.items()
+        if not filter
+        or filter.lower() in code.lower()
+        or filter.lower() in name.lower()
     ]
 
     for code, name in sorted(filtered, key=lambda x: x[1]):
