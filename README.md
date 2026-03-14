@@ -65,13 +65,13 @@ done
 uv run skills-i8n scan ./my-skills
 
 # See all supported locales
-skills-i8n list-locales
+uv run skills-i8n list-locales
 
 # Filter locales by name
-uv run  skills-i8n list-locales --filter chinese
+uv run skills-i8n list-locales --filter chinese
 
 # Auto-detect the language of a SKILL.md
-uv run  skills-i8n detect ./my-skills/pdf-processing/SKILL.md
+uv run skills-i8n detect ./my-skills/pdf-processing/SKILL.md
 ```
 
 ---
