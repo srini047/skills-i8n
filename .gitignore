@@ -10,3 +10,5 @@ build/
 .ruff_cache/
 i8n/
 .env
+.agents/
+.DS_Store
