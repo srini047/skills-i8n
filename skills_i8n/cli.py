@@ -13,7 +13,6 @@ from __future__ import annotations
 
 import asyncio
 import os
-import sys
 from pathlib import Path
 from typing import Optional
 
@@ -44,14 +43,14 @@ app = typer.Typer(
 )
 console = Console()
 
-LOGO = (
-    "\n[bold cyan]  ____  _    _ _ _ _ _   ___   ___  _   _ [/bold cyan]\n"
-    "[bold cyan] / ___|| | _(_) | (_) | |_ _| / _ \\| \\ | |[/bold cyan]\n"
-    "[bold cyan] \\___ \\| |/ / | | | | |  | | | | | |  \\| |[/bold cyan]\n"
-    "[bold cyan]  ___) |   <| | | | | |  | | |  -  | |\\  |[/bold cyan]\n"
-    "[bold cyan] |____/|_|\\_\\_|_|_|_|_| |___| \\___/|_| \\_|[/bold cyan]\n"
-    "[dim]Skill i8n · powered by Lingo.dev[/dim]\n"
-)
+LOGO = r"""[bold #39ff14]
+  ____  _    _ _ _           _  ___        
+ / ___|| | _(_) | |___      (_)( _ ) _ __  
+ \___ \| |/ / | | / __|_____| |/ _ \| '_ \ 
+  ___) |   <| | | \__ \_____| | (_) | | | |
+ |____/|_|\_\_|_|_|___/     |_|\___/|_| |_|
+"""
+
 
 def _require_api_key(api_key: str | None) -> str:
     key = api_key or os.environ.get("LINGODOTDEV_API_KEY", "")
@@ -144,7 +143,9 @@ def translate(
     key = _require_api_key(api_key)
     output_root = output or (repo_path / "i8n")
     locale_name = LOCALE_NAMES.get(target_locale, target_locale)
-    engine_label = engine_id or os.environ.get("LINGODOTDEV_ENGINE_ID") or "[dim]org default[/dim]"
+    engine_label = (
+        engine_id or os.environ.get("LINGODOTDEV_ENGINE_ID") or "[dim]org default[/dim]"
+    )
 
     console.print(
         Panel(
