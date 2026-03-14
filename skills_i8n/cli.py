@@ -17,7 +17,6 @@ from pathlib import Path
 from typing import Optional
 
 import typer
-from rich import print as rprint
 from rich.console import Console
 from rich.panel import Panel
 from rich.progress import (
@@ -31,7 +30,7 @@ from rich.progress import (
 from rich.table import Table
 from rich.text import Text
 
-from .parser import discover_skills, parse_skill_file
+from .parser import parse_skill_file
 from .repo import SkillRepo, TranslationResult
 from .translator import LOCALE_NAMES, SUPPORTED_LOCALES
 
