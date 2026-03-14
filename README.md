@@ -47,8 +47,8 @@ Get a free API key at [lingo.dev](https://lingo.dev).
 ## 🚀 Quick Start
 
 ```bash
-# Help command to get accoustomed to commands
-uv run skill-i8n --help
+# Help command to get accustomed to commands
+uv run skill-i18n --help
 
 # Translate a skills repo to German
 uv run skill-i18n translate ./my-skills de
