@@ -3,12 +3,12 @@ requires = ["setuptools", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "skills-i18n"
+name = "skills-i8n"
 version = "0.1.0"
-description = "🌐 i18n for AI Agent Skills — translate your SKILL.md repos to any language with Lingo.dev"
+description = "🌐 i8n for AI Agent Skills — translate your SKILL.md repos to any language with Lingo.dev"
 readme = "README.md"
 requires-python = ">=3.11"
-keywords = ["i18n", "agent-skills", "lingo.dev", "localization", "ai-agents", "SKILL.md"]
+keywords = ["i8n", "agent-skills", "lingo.dev", "localization", "ai-agents", "SKILL.md"]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
@@ -24,7 +24,7 @@ dependencies = [
 ]
 
 [tool.setuptools]
-packages = ["skills_i18n"]
+packages = ["skills_i8n"]
 
 [project.scripts]
-skill-i18n = "skills_i18n.cli:app"
+skills-i8n = "skills_i8n.cli:app"

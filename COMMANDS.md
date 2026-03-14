@@ -1,9 +1,9 @@
-- uv run skill-i18n scan
-- uv run skill-i18n scan •/example_skills
-- uv run skill-i18n translate •/example_skills de
-- uv run skill-i18n --help
-- uv run skill-i18n list-locales
-- uv run skill-i18n detect •/example_skills
-- uv run skill-i18n detect
-- uv run skill-i18n detect •/example_skills/code-review/SKILL.md
-- uv run skill-i18n detect •/example_skills/i18n/de/code-review/SKILL.md
+- uv run skills-i8n scan
+- uv run skills-i8n scan •/example_skills
+- uv run skills-i8n translate •/example_skills de
+- uv run skills-i8n --help
+- uv run skills-i8n list-locales
+- uv run skills-i8n detect •/example_skills
+- uv run skills-i8n detect
+- uv run skills-i8n detect •/example_skills/code-review/SKILL.md
+- uv run skills-i8n detect •/example_skills/i8n/de/code-review/SKILL.md

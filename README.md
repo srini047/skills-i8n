@@ -1,11 +1,11 @@
-# 🌐 skill-i18n
-> **i18n for AI Agent Skills** — translate your `SKILL.md` repository to any of 83+ languages, powered by [Lingo.dev](https://lingo.dev).
+# 🌐 skills-i8n
+> **i8n for AI Agent Skills** — translate your `SKILL.md` repository to any of 83+ languages, powered by [Lingo.dev](https://lingo.dev).
 
 ---
 
 AI agents are going global. Your skills should too.
 
-`skill-i18n` takes any skills repository following the [Agent Skills open standard](https://agentskills.io/) and translates every `SKILL.md` — comments, descriptions, instructions, and all — into the language your team (or your agent's users) actually speaks.
+`skills-i8n` takes any skills repository following the [Agent Skills open standard](https://agentskills.io/) and translates every `SKILL.md` — comments, descriptions, instructions, and all — into the language your team (or your agent's users) actually speaks.
 
 It preserves code blocks, structure, and technical terms. It copies companion files (`scripts/`, `references/`, `assets/`) untouched. And it does it all **concurrently**, in seconds.
 
@@ -29,8 +29,8 @@ Requires Python 3.11+ and [uv](https://github.com/astral-sh/uv).
 
 ```bash
 # Clone the repo
-git clone https://github.com/srini047/skills-i18n
-cd skills-i18n
+git clone https://github.com/srini047/skills-i8n
+cd skills-i8n
 
 # Install dependencies
 uv sync
@@ -48,30 +48,30 @@ Get a free API key at [lingo.dev](https://lingo.dev).
 
 ```bash
 # Help command to get accustomed to commands
-uv run skill-i18n --help
+uv run skills-i8n --help
 
 # Translate a skills repo to German
-uv run skill-i18n translate ./my-skills de
+uv run skills-i8n translate ./my-skills de
 
 # Translate to Spanish, output to a custom directory
-uv run skill-i18n translate ./my-skills es --output ./translated-skills
+uv run skills-i8n translate ./my-skills es --output ./translated-skills
 
 # Translate to multiple languages (run in sequence or convert to a bash script)
 for locale in fr de ko zh; do
-  uv run skill-i18n translate ./my-skills $locale --output ./i18n
+  uv run skills-i8n translate ./my-skills $locale --output ./i8n
 done
 
 # Scan before translating
-uv run skill-i18n scan ./my-skills
+uv run skills-i8n scan ./my-skills
 
 # See all supported locales
-skill-i18n list-locales
+skills-i8n list-locales
 
 # Filter locales by name
-uv run  skill-i18n list-locales --filter chinese
+uv run  skills-i8n list-locales --filter chinese
 
 # Auto-detect the language of a SKILL.md
-uv run  skill-i18n detect ./my-skills/pdf-processing/SKILL.md
+uv run  skills-i8n detect ./my-skills/pdf-processing/SKILL.md
 ```
 
 ---
@@ -92,10 +92,10 @@ my-skills/
     └── SKILL.md
 ```
 
-Running `uv run skill-i18n translate ./my-skills de --output ./i18n` produces:
+Running `uv run skills-i8n translate ./my-skills de --output ./i8n` produces:
 
 ```
-i18n/
+i8n/
 └── de/
     ├── pdf-processing/
     │   ├── SKILL.md          ← translated
@@ -130,7 +130,7 @@ Sharing sample output diff:
 | `hi` | Hindi | `ru` | Russian |
 | `it` | Italian | `nl` | Dutch |
 
-Run `uv run skill-i18n list-locales` to see complete list
+Run `uv run skills-i8n list-locales` to see complete list
 
 > [!NOTE]
 > Incase a locale is not supported or any current supported locale doesn't work feel free to reach out to me or raise an issue with minimal repro. Happy to solve the bug.

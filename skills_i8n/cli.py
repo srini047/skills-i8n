@@ -1,12 +1,12 @@
 """
-skill-i18n CLI — translate your agent skills repo to any language.
+skills-i8n CLI — translate your agent skills repo to any language.
 
 Sample Usage:
-    skill-i18n translate ./my-skills es
-    skill-i18n translate ./my-skills ja --output ./translated
-    skill-i18n list-locales
-    skill-i18n scan ./my-skills
-    skill-i18n detect ./my-skills/pdf-processing/SKILL.md
+    skills-i8n translate ./my-skills es
+    skills-i8n translate ./my-skills ja --output ./translated
+    skills-i8n list-locales
+    skills-i8n scan ./my-skills
+    skills-i8n detect ./my-skills/pdf-processing/SKILL.md
 """
 
 from __future__ import annotations
@@ -37,8 +37,8 @@ from .repo import SkillRepo, TranslationResult
 from .translator import LOCALE_NAMES, SUPPORTED_LOCALES
 
 app = typer.Typer(
-    name="skill-i18n",
-    help="🌐 i18n for AI Agent Skills — powered by Lingo.dev",
+    name="skills-i8n",
+    help="🌐 i8n for AI Agent Skills — powered by Lingo.dev",
     rich_markup_mode="rich",
     add_completion=False,
 )
@@ -87,7 +87,7 @@ def translate(
         None,
         "--output",
         "-o",
-        help="Output directory. Defaults to <repo_path>/i18n/",
+        help="Output directory. Defaults to <repo_path>/i8n/",
     ),
     source_locale: str = typer.Option(
         "en",
@@ -130,19 +130,19 @@ def translate(
     and writes localized copies preserving your directory structure.
 
     [dim]Example:[/dim]
-        [cyan]skill-i18n translate ./my-skills ja --output ./translated[/cyan]
+        [cyan]skills-i8n translate ./my-skills ja --output ./translated[/cyan]
     """
     console.print(LOGO)
 
     if target_locale not in SUPPORTED_LOCALES:
         console.print(
             f"[red]Unknown locale: [bold]{target_locale}[/bold][/red]\n"
-            "Run [cyan]skill-i18n list-locales[/cyan] to see all supported locales."
+            "Run [cyan]skills-i8n list-locales[/cyan] to see all supported locales."
         )
         raise typer.Exit(1)
 
     key = _require_api_key(api_key)
-    output_root = output or (repo_path / "i18n")
+    output_root = output or (repo_path / "i8n")
     locale_name = LOCALE_NAMES.get(target_locale, target_locale)
     engine_label = engine_id or os.environ.get("LINGODOTDEV_ENGINE_ID") or "[dim]org default[/dim]"
 
@@ -154,7 +154,7 @@ def translate(
             f"[bold]Output:[/bold]     {output_root.resolve()}\n"
             f"[bold]Engine:[/bold]     {engine_label}\n"
             f"[bold]Threads:[/bold]    {concurrency}",
-            title="🌐 skill-i18n Translation Job",
+            title="🌐 skills-i8n Translation Job",
             border_style="cyan",
         )
     )
